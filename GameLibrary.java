@@ -8,16 +8,14 @@
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class GameLibrary {
 
     static String currentListName = "gameList";
     static LinkedList<String> files = new LinkedList<>();
     static Hashtable<String, VideoGames[]> filesData = new Hashtable<>();
+    static sortGames sort;//Used for sorting the games
     static String[] gameTypes = {"Deckbuilder", "Dungeon-Crawler", "Roll-and-Move", "Table-Top-RPG", "VideoGame", "Other"};;
     static String[] videoGameTypes = {"Real-Time-Strategy", "Role-Playing", "Shooter", "Platformer", "Puzzle", "PartyGame",
             "MOBA", "Simulation", "Horror", "Other"};
@@ -28,6 +26,7 @@ public class GameLibrary {
         String input = "";
         boolean inputB;
         VideoGames[] gameList;
+        sort = new sortGames();
 
         files.add(currentListName);
         filesData.put(currentListName, new VideoGames[0]);
@@ -77,6 +76,18 @@ public class GameLibrary {
                                 if(name == null) {//hit cancel button
                                     inputB = (JOptionPane.showConfirmDialog(null, "Would you like to cancel adding a game? ",
                                             "Add Game - Cancel", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
+                                    if(inputB) {
+                                        cancel = true;
+                                        check = false;
+                                    }
+                                    else {
+                                        check = true;
+                                    }
+                                }
+                                else if(name.equals("")) {//Empty Name
+                                    inputB = (JOptionPane.showConfirmDialog(null, "No name was inserted which isn't allowed \n"
+                                                    + "Was this because you wanted to cancel adding games? ",
+                                            "Add Game - No Name", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
                                     if(inputB) {
                                         cancel = true;
                                         check = false;
@@ -209,7 +220,7 @@ public class GameLibrary {
                                         "Save", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
                                 filesData.replace(currentListName,gameList);
                                 if(inputB) {
-                                    gameList = sortList(gameList);
+                                    gameList = sort.sortList(gameList);
                                     Loader.saveGameList(gameList, currentListName);
                                 }
                                 //offering to add another game
@@ -272,19 +283,43 @@ public class GameLibrary {
                                         String newName;
                                         do {
                                             newName = JOptionPane.showInputDialog(null, "What is the new name of the game?");
-                                            check = false;
-                                            for(VideoGames gl:gameList) {
-                                                if (newName.equalsIgnoreCase(gl.getName())) {
-                                                    check = true;
-                                                    break;
-                                                }
-                                            }
-                                            if(check) {
-                                                if((newName.equalsIgnoreCase(gameList[game].getName())) && !(newName.equals(gameList[game].getName()))) {
+                                            if(newName == null) {//hit cancel button
+                                                inputB = (JOptionPane.showConfirmDialog(null, "Would you like to cancel adding a game? ",
+                                                        "Add Game - Cancel", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
+                                                if(inputB) {
+                                                    cancel = true;
                                                     check = false;
                                                 }
                                                 else {
-                                                    JOptionPane.showMessageDialog(null, "Their is already another game with the same name in the game list", "Warning", JOptionPane.WARNING_MESSAGE);
+                                                    check = true;
+                                                }
+                                            }
+                                            else if(newName.equals("")) {//Empty Name
+                                                inputB = (JOptionPane.showConfirmDialog(null, "No name was inserted which isn't allowed \n"
+                                                                + "Was this because you wanted to cancel adding games? ",
+                                                        "Add Game - No Name", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
+                                                if(inputB) {
+                                                    cancel = true;
+                                                    check = false;
+                                                }
+                                                else {
+                                                    check = true;
+                                                }
+                                            }
+                                            else {//checking if there is already a game with the same name
+                                                check = false;
+                                                for (VideoGames gl : gameList) {
+                                                    if (newName.equalsIgnoreCase(gl.getName())) {
+                                                        check = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (check) {
+                                                    if ((newName.equalsIgnoreCase(gameList[game].getName())) && !(newName.equals(gameList[game].getName()))) {
+                                                        check = false;
+                                                    } else {
+                                                        JOptionPane.showMessageDialog(null, "Their is already another game with the same name in the game list", "Warning", JOptionPane.WARNING_MESSAGE);
+                                                    }
                                                 }
                                             }
                                         } while(check);
@@ -339,7 +374,7 @@ public class GameLibrary {
                         inputB = (JOptionPane.showConfirmDialog(null, "Would you like to save now after editing the list? ",
                                 "Save", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION);
                         if(inputB) {
-                            gameList = sortList(gameList);
+                            gameList = sort.sortList(gameList);
                             Loader.saveGameList(gameList, currentListName);
                         }
                     }//edit game
@@ -432,7 +467,7 @@ public class GameLibrary {
                                 }
                             }
                             String matchType = "";
-                            gameList = sortList(gameList);
+                            gameList = sort.sortList(gameList);
                             for(VideoGames gl:gameList) {
                                 if(type == 0 && vgType >= 0) {
                                     if(gl.getType().equalsIgnoreCase(gameTypes[type]) && gl.getVgType().equalsIgnoreCase(videoGameTypes[vgType])) {
@@ -665,7 +700,33 @@ public class GameLibrary {
                     }//go back
                 } while(runLoad);
             }//load data
-            else if(inputI == 5) {//end program
+            else if(inputI == 5) {//options
+                boolean runOptions = true;
+                do {
+                    String[] options = {"Name", "Type", "Go Back"};
+                    String alphabetically;
+                    if(sort.alphabetically) {
+                        alphabetically = "Currently when viewing games in list, it will sort it by its name alphabetically \n";
+                    }
+                    else {
+                        alphabetically = "Currently when viewing games in list, it will sort it by its type alphabetically \n";
+                    }
+                    int optionInput = JOptionPane.showOptionDialog(null, "Please select which order you want to view the games in \n"
+                                    + alphabetically + "Use the Go Back button to return to main menu \n",
+                            "Options", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+                    if(optionInput == 0) {
+                        sort.alphabetically = true;
+                    }
+                    else if(optionInput == 1) {
+                        sort.alphabetically = false;
+                    }
+                    else if(optionInput == 2) {
+                        runOptions = false;
+                    }
+                } while(runOptions);
+
+            }//options
+            else if(inputI == 6) {//end program
                 runProgram = false;
             }//end program
         } while (runProgram);
@@ -713,12 +774,17 @@ public class GameLibrary {
     }
 
     public static void viewGames(VideoGames[] gameList) {
-        gameList = sortList(gameList);
-        String result = "Full List of Games:\n\n";
-        for(Games gl:gameList) {
-            result+=gl.toString() + "\n";
+        if(gameList.length > 0) {
+            gameList = sort.sortList(gameList);
+            String result = "Full List of Games:\n\n";
+            for(Games gl:gameList) {
+                result+=gl.toString() + "\n";
+            }
+            JOptionPane.showMessageDialog(null, result);
         }
-        JOptionPane.showMessageDialog(null, result);
+        else {
+            JOptionPane.showMessageDialog(null, "There are currently no games to view in this list ", "Warning - No Games", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     public static void setFileName() {
@@ -770,240 +836,4 @@ public class GameLibrary {
                     "Invalid File Name", JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    //Merge sort has a complexity of O(n logn)
-    //Uses multiple merge sort to organise all the types alphabetically and the names within each type alphabetically as well
-    public static VideoGames[] sortList (VideoGames[] gameList) {
-
-        gameList = sortType(gameList);
-
-        int[] change = {0};
-        String previous = "";
-
-        for(int i = 0; i < gameList.length; i++) {
-            if(i == 0) {
-                previous = gameList[i].getType();
-            }
-            else {
-                if(!previous.equals(gameList[i].getType())) {
-                    int[] temp = new int[change.length+1];
-                    for(int x = 0; x < change.length; x++) {
-                        temp[x] = change[x];
-                    }
-                    temp[change.length] = i;
-                    change = new int[temp.length];
-                    for(int x = 0; x < change.length; x++) {
-                        change[x] = temp[x];
-                    }
-                }
-                previous = gameList[i].getType();
-            }
-        }
-
-        for(int i = 0; i < change.length-1; i++) {
-            VideoGames[] temp = new VideoGames[change[i+1]-change[i]];
-            for(int x = change[i]; x < change[i+1]; x++ ) {
-                temp[x-change[i]].setAll(gameList[x]);
-            }
-            temp = sortNames(temp);
-            for(int x = change[i]; x < change[i+1]; x++ ) {
-                gameList[x].setAll(temp[x-change[i]]);
-            }
-        }
-
-        int last = change[change.length-1];
-        VideoGames[] temps = new VideoGames[gameList.length-last];
-        for(int x = last; x < gameList.length; x++ ) {
-            temps[x-last].setAll(gameList[x]);
-        }
-        if((gameList[change[last]].getType()).equalsIgnoreCase("VideoGame")) {
-            temps = sortVgType(temps);
-            int[] changes = {0};
-
-            for(int i = 0; i < temps.length; i++) {
-                if(i == 0) {
-                    previous = temps[i].getVgType();
-                }
-                else {
-                    if(!previous.equals(temps[i].getVgType())) {
-                        int[] temp = new int[changes.length+1];
-                        for(int x = 0; x < changes.length; x++) {
-                            temp[x] = changes[x];
-                        }
-                        temp[changes.length] = i;
-                        changes = new int[temp.length];
-                        for(int x = 0; x < changes.length; x++) {
-                            changes[x] = temp[x];
-                        }
-                    }
-                    previous = temps[i].getVgType();
-                }
-            }
-
-            for(int i = 0; i < changes.length-1; i++) {
-                VideoGames[] temp = new VideoGames[changes[i+1]-changes[i]];
-                for(int x = changes[i]; x < changes[i+1]; x++ ) {
-                    temp[x-changes[i]].setAll(temps[x]);
-                }
-                temp = sortNames(temp);
-                for(int x = changes[i]; x < changes[i+1]; x++ ) {
-                    temps[x].setAll(temp[x-changes[i]]);
-                }
-            }
-
-            int lasts = changes[changes.length-1];
-            VideoGames[] temp = new VideoGames[temps.length-last];
-            for(int x = last; x < temps.length; x++ ) {
-                temp[x-last].setAll(temps[x]);
-            }
-            temp = sortNames(temp);
-            for(int x = last; x < temps.length; x++ ) {
-                temps[x].setAll(temp[x-last]);
-            }
-        }
-        else {
-            temps = sortNames(temps);
-        }
-        for(int x = last; x < gameList.length; x++ ) {
-            gameList[x].setAll(temps[x-last]);
-        }
-
-        return gameList;
-    }
-
-    //Uses merge sort to sort the game names in alphabetical order
-    public static VideoGames[] sortNames (VideoGames[] gameList) {
-        mergeSortName(gameList);
-        return gameList;
-    }
-
-    //Uses merge sort to sort the game type in alphabetical order
-    public static VideoGames[] sortType (VideoGames[] gameList) {
-        mergeSortType(gameList);
-        return gameList;
-    }
-
-    //Uses merge sort to sort the game video game type in alphabetical order
-    public static VideoGames[] sortVgType (VideoGames[] gameList) {
-        mergeSortVgType(gameList);
-        return gameList;
-    }
-
-    public static void mergeSortName(VideoGames[] list) {
-        if (list.length > 1) {
-            // Merge sort the first half
-            VideoGames[] firstHalf = new VideoGames[list.length / 2];
-            System.arraycopy(list, 0, firstHalf, 0, list.length / 2);
-            mergeSortName(firstHalf);
-
-            // Merge sort the second half
-            int secondHalfLength = list.length - list.length / 2;
-            VideoGames[] secondHalf = new VideoGames[secondHalfLength];
-            System.arraycopy(list, list.length / 2,
-                    secondHalf, 0, secondHalfLength);
-            mergeSortName(secondHalf);
-
-            // Merge firstHalf with secondHalf into list
-            mergeName(firstHalf, secondHalf, list);
-        }
-    }
-
-    public static void mergeName(VideoGames[] list1, VideoGames[] list2, VideoGames[] temp) {
-        int current1 = 0; // Current index in list1
-        int current2 = 0; // Current index in list2
-        int current3 = 0; // Current index in temp
-
-        while (current1 < list1.length && current2 < list2.length) {
-            //if list1 value is earlier-smaller than list2 value
-            if ((list1[current1].getName()).compareTo(list2[current2].getName()) < 0)
-                temp[current3++] = list1[current1++];
-            else
-                temp[current3++] = list2[current2++];
-        }
-
-        while (current1 < list1.length)
-            temp[current3++] = list1[current1++];
-
-        while (current2 < list2.length)
-            temp[current3++] = list2[current2++];
-    }
-
-    public static void mergeSortType(VideoGames[] list) {
-        if (list.length > 1) {
-            // Merge sort the first half
-            VideoGames[] firstHalf = new VideoGames[list.length / 2];
-            System.arraycopy(list, 0, firstHalf, 0, list.length / 2);
-            mergeSortType(firstHalf);
-
-            // Merge sort the second half
-            int secondHalfLength = list.length - list.length / 2;
-            VideoGames[] secondHalf = new VideoGames[secondHalfLength];
-            System.arraycopy(list, list.length / 2,
-                    secondHalf, 0, secondHalfLength);
-            mergeSortType(secondHalf);
-
-            // Merge firstHalf with secondHalf into list
-            mergeType(firstHalf, secondHalf, list);
-        }
-    }
-
-    public static void mergeType(VideoGames[] list1, VideoGames[] list2, VideoGames[] temp) {
-        int current1 = 0; // Current index in list1
-        int current2 = 0; // Current index in list2
-        int current3 = 0; // Current index in temp
-
-        while (current1 < list1.length && current2 < list2.length) {
-            //if list1 value is earlier-smaller than list2 value
-            if ((list1[current1].getType()).compareTo(list2[current2].getType()) < 0)
-                temp[current3++] = list1[current1++];
-            else
-                temp[current3++] = list2[current2++];
-        }
-
-        while (current1 < list1.length)
-            temp[current3++] = list1[current1++];
-
-        while (current2 < list2.length)
-            temp[current3++] = list2[current2++];
-    }
-
-    public static void mergeSortVgType(VideoGames[] list) {
-        if (list.length > 1) {
-            // Merge sort the first half
-            VideoGames[] firstHalf = new VideoGames[list.length / 2];
-            System.arraycopy(list, 0, firstHalf, 0, list.length / 2);
-            mergeSortVgType(firstHalf);
-
-            // Merge sort the second half
-            int secondHalfLength = list.length - list.length / 2;
-            VideoGames[] secondHalf = new VideoGames[secondHalfLength];
-            System.arraycopy(list, list.length / 2,
-                    secondHalf, 0, secondHalfLength);
-            mergeSortVgType(secondHalf);
-
-            // Merge firstHalf with secondHalf into list
-            mergeVgType(firstHalf, secondHalf, list);
-        }
-    }
-
-    public static void mergeVgType(VideoGames[] list1, VideoGames[] list2, VideoGames[] temp) {
-        int current1 = 0; // Current index in list1
-        int current2 = 0; // Current index in list2
-        int current3 = 0; // Current index in temp
-
-        while (current1 < list1.length && current2 < list2.length) {
-            //if list1 value is earlier-smaller than list2 value
-            if ((list1[current1].getVgType()).compareTo(list2[current2].getVgType()) < 0)
-                temp[current3++] = list1[current1++];
-            else
-                temp[current3++] = list2[current2++];
-        }
-
-        while (current1 < list1.length)
-            temp[current3++] = list1[current1++];
-
-        while (current2 < list2.length)
-            temp[current3++] = list2[current2++];
-    }
-
 }

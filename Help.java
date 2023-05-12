@@ -11,7 +11,7 @@ import javax.swing.JOptionPane;
 public class Help {
 
     //String array containing each command in each string for ease of use
-    public static final String[] mainMenu = {"Commands", "About", "Edit List", "View Data", "Load Data", "End Program"};
+    public static final String[] mainMenu = {"Commands", "About", "Edit List", "View Data", "Load Data", "Options", "End Program"};
     public static final String[] editList = {"Commands", "Add Game", "Edit Game", "Remove Game", "Go Back"};
     public static final String[] viewData = {"Commands", "Search by Type", "Search by Players", "Random Game", "View All", "Go Back"};
     public static final String[] loadDate = {"Commands", "Load New File", "Change Current File", "Close Files", "Go Back"};
@@ -21,6 +21,7 @@ public class Help {
                 "Edit List - anything about editing the currently selected list\n"+
                 "View Data - anything about viewing the data of the current file being edited\n"+
                 "Load Data - editing which files are loaded and which one you are editing\n"+
+                "Options - Allows for setting viewing collection alphabetically by its name or by type\n"+
                 "End Program - It saves all open files and then closes the program\n";
         JOptionPane.showMessageDialog(null,"Main Menu Command List:\n"+commandsText,"Main Menu", JOptionPane.INFORMATION_MESSAGE);
     }
